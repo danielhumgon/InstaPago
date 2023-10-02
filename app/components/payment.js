@@ -1,20 +1,23 @@
-'use client'
-import { useState } from 'react';
-import axios from 'axios';
+"use client";
+import { useState } from "react";
+import axios from "axios";
+
+const apiKey = process.env.INSTAPAGO_API_KEY;
+const publicKey = process.env.INSTAPAGO_PUBLIC_ID;
 
 function PaymentComponent() {
   const [paymentData, setPaymentData] = useState({
-    KeyId: process.env.INSTAPAGO_API_KEY, // api key
-    PublicKeyId: 'YOUR_PUBLIC_KEY', // Usar Llave compartida
-    Amount: '', // Monto
-    Description: 'Pago del producto', 
-    CardHolder: '', // Nombre del Tarjeta habiente
-    CardHolderID: '', // Cédula del Tarjeta habiente
-    CardNumber: '', // Numero de la tarjeta de crédito
-    CVC: '', // Código secreto de la Tarjeta de crédito
-    ExpirationDate: '', // MM/AAAA fecha de expiracion 
-    StatusId: '2', // 2 para "Pagar" (autorizacion)
-    IP: '127.0.0.1', // Reemplazar con la ip del consumidor
+    KeyId: apiKey, // api key
+    PublicKeyId: publicKey, // Usar Llave compartida
+    Amount: "", // Monto
+    Description: "Pago del producto",
+    CardHolder: "", // Nombre del Tarjeta habiente
+    CardHolderID: "", // Cédula del Tarjeta habiente
+    CardNumber: "", // Numero de la tarjeta de crédito
+    CVC: "", // Código secreto de la Tarjeta de crédito
+    ExpirationDate: "", // MM/AAAA fecha de expiracion
+    StatusId: "2", // 2 para "Pagar" (autorizacion)
+    IP: "127.0.0.1", // Reemplazar con la ip del consumidor
   });
 
   const [errors, setErrors] = useState({});
@@ -25,37 +28,47 @@ function PaymentComponent() {
       ...paymentData,
       [name]: value,
     });
-    setErrors({ ...errors, [name]: '' });
+    setErrors({ ...errors, [name]: "" });
   };
 
   const validateForm = () => {
     const newErrors = {};
 
-    if (!paymentData.Amount || isNaN(paymentData.Amount) || parseFloat(paymentData.Amount) <= 0) {
-      newErrors.Amount = 'Monto invalido';
+    if (
+      !paymentData.Amount ||
+      isNaN(paymentData.Amount) ||
+      parseFloat(paymentData.Amount) <= 0
+    ) {
+      newErrors.Amount = "Monto invalido";
     }
 
-    if (!paymentData.CardHolder) {
-      newErrors.CardHolder = 'Nombre requerido';
+    if (!/^[a-zA-ZñÑ\s]+$/.test(paymentData.CardHolder)) {
+      newErrors.CardHolder = "Nombre requerido";
     }
 
-    if (!paymentData.CardHolderID) {
-      newErrors.CardHolderID = 'Cedula requerida';
+    if (!/^\d{6,8}$/.test(paymentData.CardHolderID)) {
+      newErrors.CardHolderID = "Cedula invalida";
     }
 
-    if (!paymentData.CardNumber || !/^\d{16}$/.test(paymentData.CardNumber)) {
-      newErrors.CardNumber = 'Numero de tarjeta invalido';
+    if (!/^\d{15,16}$/.test(paymentData.CardNumber)) {
+      newErrors.CardNumber = "Numero de tarjeta invalido";
     }
 
-    if (!paymentData.CVC || !/^\d{3}$/.test(paymentData.CVC)) {
-      newErrors.CVC = 'CVC invalido';
+    if (!isValidExpirationDate(paymentData.ExpirationDate)) {
+      newErrors.ExpirationDate = "Fecha de expiracion invalida";
     }
 
-    if (!paymentData.ExpirationDate || !/^\d{2}\/\d{4}$/.test(paymentData.ExpirationDate)) {
-      newErrors.ExpirationDate = 'Fecha invalida. Formato: MM/AAAA';
+    if (!/^\d{3}$/.test(paymentData.CVC)) {
+      newErrors.CVC = "CVC invalido";
     }
 
     return newErrors;
+  };
+  // Validar fecha
+  const isValidExpirationDate = (date) => {
+    const today = new Date();
+    const inputDate = new Date(`01/${date}`);
+    return inputDate > today;
   };
 
   const handlePayment = async () => {
@@ -63,18 +76,22 @@ function PaymentComponent() {
 
     if (Object.keys(newErrors).length === 0) {
       try {
-        const response = await axios.post('https://api.instapago.com/payment', paymentData, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        });
+        const response = await axios.post(
+          "https://api.instapago.com/payment",
+          paymentData,
+          {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+          }
+        );
 
         const responseData = response.data;
-        console.log('Payment Response:', responseData);
+        console.log("Payment Response:", responseData);
 
         // Manejo de errores
       } catch (error) {
-        console.error('Payment Error:', error);
+        console.error("Payment Error:", error);
         // Manejar error de pago aca
       }
     } else {
@@ -97,7 +114,9 @@ function PaymentComponent() {
         <span className="text-red-500">{errors.Amount}</span>
       </div>
       <div className="mb-4">
-        <label className="block text-gray-600">Nombre del Tarjeta habiente:</label>
+        <label className="block text-gray-600">
+          Nombre del Tarjeta habiente:
+        </label>
         <input
           type="text"
           name="CardHolder"
@@ -108,7 +127,9 @@ function PaymentComponent() {
         <span className="text-red-500">{errors.CardHolder}</span>
       </div>
       <div className="mb-4">
-        <label className="block text-gray-600">Cédula del Tarjeta habiente:</label>
+        <label className="block text-gray-600">
+          Cédula del Tarjeta habiente:
+        </label>
         <input
           type="text"
           name="CardHolderID"
@@ -130,6 +151,20 @@ function PaymentComponent() {
         <span className="text-red-500">{errors.CardNumber}</span>
       </div>
       <div className="mb-4">
+        <label className="block text-gray-600">
+          Fecha de expiración (MM/AAAA):
+        </label>
+        <input
+          type="text"
+          name="ExpirationDate"
+          value={paymentData.ExpirationDate}
+          onChange={handleChange}
+          placeholder="MM/YYYY"
+          className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
+        />
+        <span className="text-red-500">{errors.ExpirationDate}</span>
+      </div>
+      <div className="mb-4">
         <label className="block text-gray-600">CVC:</label>
         <input
           type="text"
@@ -139,17 +174,6 @@ function PaymentComponent() {
           className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
         />
         <span className="text-red-500">{errors.CVC}</span>
-      </div>
-      <div className="mb-4">
-        <label className="block text-gray-600">Fecha de expiración (MM/AAAA):</label>
-        <input
-          type="text"
-          name="ExpirationDate"
-          value={paymentData.ExpirationDate}
-          onChange={handleChange}
-          className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
-        />
-        <span className="text-red-500">{errors.ExpirationDate}</span>
       </div>
       <button
         className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-full"
