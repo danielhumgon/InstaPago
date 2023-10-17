@@ -79,7 +79,7 @@ function PaymentComponent() {
 
         const options = {
           method: 'POST',
-          url:'http://localhost:3000/api/pay',
+          url:'/api/pay',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             //'Access-Control-Allow-Origin' : '*',
