@@ -25,6 +25,6 @@ export default async function handler(req, res) {
       res.status(500).json({ error: "Payment error" });
     }
   } else {
-    res.status(405).end(); // Method not allowed
+    res.status(405).end(); // Method not allowed.
   }
 }
