@@ -2,8 +2,8 @@
 import { useState } from "react";
 import axios from "axios";
 
-const apiKey = process.env.INSTAPAGO_API_KEY;
-const publicKey = process.env.INSTAPAGO_PUBLIC_ID;
+const apiKey = process.env.NEXT_PUBLIC_API_KEY
+const publicKey = process.env.NEXT_PUBLIC_PUBLIC_ID
 
 function PaymentComponent() {
   const [paymentData, setPaymentData] = useState({
@@ -72,23 +72,27 @@ function PaymentComponent() {
   };
 
   const handlePayment = async () => {
+    console.log('Boton de pago clickeado!');
     const newErrors = validateForm();
-
     if (Object.keys(newErrors).length === 0) {
       try {
-        const response = await axios.post(
-          "https://api.instapago.com/payment",
-          paymentData,
-          {
-            headers: {
-              "Content-Type": "application/x-www-form-urlencoded",
-            },
-          }
-        );
 
+        const options = {
+          method: 'POST',
+          url:'http://localhost:3000/api/pay',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            //'Access-Control-Allow-Origin' : '*',
+            //'Access-Control-Allow-Methods':'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+          },
+          data: paymentData
+          
+        } 
+        console.log(options)
+        const response = await axios.request(options);
+  
         const responseData = response.data;
         console.log("Payment Response:", responseData);
-
         // Manejo de errores
       } catch (error) {
         console.error("Payment Error:", error);
