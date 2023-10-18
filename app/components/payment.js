@@ -21,6 +21,7 @@ function PaymentComponent() {
   });
 
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -75,6 +76,7 @@ function PaymentComponent() {
     console.log('Boton de pago clickeado!');
     const newErrors = validateForm();
     if (Object.keys(newErrors).length === 0) {
+      setIsLoading(true);
       try {
 
         const options = {
@@ -97,6 +99,8 @@ function PaymentComponent() {
       } catch (error) {
         console.error("Payment Error:", error);
         // Manejar error de pago aca
+      } finally {
+        setIsLoading(false); 
       }
     } else {
       setErrors(newErrors);
@@ -183,7 +187,7 @@ function PaymentComponent() {
         className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-full"
         onClick={handlePayment}
       >
-        Pagar
+        {isLoading ? 'Procesando...' : 'Pagar'}
       </button>
     </div>
   );
