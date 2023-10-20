@@ -1,9 +1,12 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import axios from "axios";
+import VoucherComponent from "./voucher";
+import logos from './assets/logos.png'
 
-const apiKey = process.env.NEXT_PUBLIC_API_KEY
-const publicKey = process.env.NEXT_PUBLIC_PUBLIC_ID
+const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+const publicKey = process.env.NEXT_PUBLIC_PUBLIC_ID;
 
 function PaymentComponent() {
   const [paymentData, setPaymentData] = useState({
@@ -22,6 +25,7 @@ function PaymentComponent() {
 
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [paymentResponse, setPaymentResponse] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -73,34 +77,33 @@ function PaymentComponent() {
   };
 
   const handlePayment = async () => {
-    console.log('Boton de pago clickeado!');
+    console.log("Boton de pago clickeado!");
     const newErrors = validateForm();
     if (Object.keys(newErrors).length === 0) {
       setIsLoading(true);
       try {
-
         const options = {
-          method: 'POST',
-          url:'/api/pay',
+          method: "POST",
+          url: "/api/pay",
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
+            "Content-Type": "application/x-www-form-urlencoded",
             //'Access-Control-Allow-Origin' : '*',
             //'Access-Control-Allow-Methods':'GET,PUT,POST,DELETE,PATCH,OPTIONS',
           },
-          data: paymentData
-          
-        } 
-        console.log(options)
+          data: paymentData,
+        };
+        console.log(options);
         const response = await axios.request(options);
-  
+
         const responseData = response.data;
+        setPaymentResponse(responseData);
         console.log("Payment Response:", responseData);
         // Manejo de errores
       } catch (error) {
         console.error("Payment Error:", error);
         // Manejar error de pago aca
       } finally {
-        setIsLoading(false); 
+        setIsLoading(false);
       }
     } else {
       setErrors(newErrors);
@@ -110,85 +113,114 @@ function PaymentComponent() {
   return (
     <div className="mt-6">
       <h2 className="text-xl font-semibold mb-4">Detalles del Pago</h2>
-      <div className="mb-4">
-        <label className="block text-gray-600">Monto a Debitar:</label>
-        <input
-          type="text"
-          name="Amount"
-          value={paymentData.Amount}
-          onChange={handleChange}
-          className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
+      {paymentResponse ? ( // Renderiza el voucher luego del pago
+        <VoucherComponent
+          clientData={paymentData}
+          paymentInfo={paymentResponse}
         />
-        <span className="text-red-500">{errors.Amount}</span>
-      </div>
-      <div className="mb-4">
-        <label className="block text-gray-600">
-          Nombre del Tarjeta habiente:
-        </label>
-        <input
-          type="text"
-          name="CardHolder"
-          value={paymentData.CardHolder}
-          onChange={handleChange}
-          className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
-        />
-        <span className="text-red-500">{errors.CardHolder}</span>
-      </div>
-      <div className="mb-4">
-        <label className="block text-gray-600">
-          Cédula del Tarjeta habiente:
-        </label>
-        <input
-          type="text"
-          name="CardHolderID"
-          value={paymentData.CardHolderID}
-          onChange={handleChange}
-          className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
-        />
-        <span className="text-red-500">{errors.CardHolderID}</span>
-      </div>
-      <div className="mb-4">
-        <label className="block text-gray-600">Numero de la tarjeta:</label>
-        <input
-          type="text"
-          name="CardNumber"
-          value={paymentData.CardNumber}
-          onChange={handleChange}
-          className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
-        />
-        <span className="text-red-500">{errors.CardNumber}</span>
-      </div>
-      <div className="mb-4">
-        <label className="block text-gray-600">
-          Fecha de expiración (MM/AAAA):
-        </label>
-        <input
-          type="text"
-          name="ExpirationDate"
-          value={paymentData.ExpirationDate}
-          onChange={handleChange}
-          placeholder="MM/YYYY"
-          className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
-        />
-        <span className="text-red-500">{errors.ExpirationDate}</span>
-      </div>
-      <div className="mb-4">
-        <label className="block text-gray-600">CVC:</label>
-        <input
-          type="text"
-          name="CVC"
-          value={paymentData.CVC}
-          onChange={handleChange}
-          className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
-        />
-        <span className="text-red-500">{errors.CVC}</span>
-      </div>
-      <button
-        className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-full"
-        onClick={handlePayment}
-      >
-        {isLoading ? 'Procesando...' : 'Pagar'}
-      </button>
+      ) : (
+        <form
+          autoComplete="off"
+          onSubmit={(e) => {
+            e.preventDefault();
+            handlePayment();
+          }}
+        >
+          <div>
+            <div className="mb-4">
+              <label className="block text-gray-600">Monto a Debitar:</label>
+              <input
+                type="text"
+                name="Amount"
+                value={paymentData.Amount}
+                onChange={handleChange}
+                className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
+              />
+              <span className="text-red-500">{errors.Amount}</span>
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-600">
+                Nombre del Tarjeta habiente:
+              </label>
+              <input
+                type="text"
+                name="CardHolder"
+                value={paymentData.CardHolder}
+                onChange={handleChange}
+                className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
+              />
+              <span className="text-red-500">{errors.CardHolder}</span>
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-600">
+                Cédula del Tarjeta habiente:
+              </label>
+              <input
+                type="text"
+                name="CardHolderID"
+                value={paymentData.CardHolderID}
+                onChange={handleChange}
+                className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
+              />
+              <span className="text-red-500">{errors.CardHolderID}</span>
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-600">
+                Numero de la tarjeta:
+              </label>
+              <input
+                type="text"
+                name="CardNumber"
+                value={paymentData.CardNumber}
+                onChange={handleChange}
+                className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
+              />
+              <span className="text-red-500">{errors.CardNumber}</span>
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-600">
+                Fecha de expiración (MM/AAAA):
+              </label>
+              <input
+                type="text"
+                name="ExpirationDate"
+                value={paymentData.ExpirationDate}
+                onChange={handleChange}
+                placeholder="MM/YYYY"
+                className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
+              />
+              <span className="text-red-500">{errors.ExpirationDate}</span>
+            </div>
+            <div className="mb-4">
+              <label className="block text-gray-600">CVC:</label>
+              <input
+                type="password"
+                name="CVC"
+                value={paymentData.CVC}
+                onChange={handleChange}
+                className="w-full border rounded-md py-2 px-3 text-gray-700 focus:outline-none focus:ring focus:border-blue-500"
+              />
+              <span className="text-red-500">{errors.CVC}</span>
+            </div>
+            <button
+              type="submit"
+              className={`bg-blue-500 text-white font-semibold px-4 py-2 rounded ${
+                isLoading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
+              disabled={isLoading}
+            >
+              {isLoading ? "Procesando..." : "Pagar"}
+            </button>
+            <div className="mt-4">
+              <span className="text-gray-600 text-xs">
+                Esta transacción será procesada de forma segura gracias a la
+                plataforma de:
+              </span>
+              <Image className="mt-4 w-3/4 m-auto" src={logos} alt="logotipos" />
+            </div>
+          </div>
+        </form>
+      )}
     </div>
   );
 }
